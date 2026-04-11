@@ -48,6 +48,9 @@
     --panel-bg: 222 47% 7%;
     --panel-border: 142 71% 45%;
     --grid-line: 222 30% 12%;
+    --scanline-safe: 142 71% 45%;
+    --scanline-warning: 45 96% 47%;
+    --scanline-danger: 0 84% 60%;
 
     --font-display: 'Orbitron', monospace;
     --font-body: 'Rajdhani', sans-serif;
@@ -114,6 +117,21 @@
     pointer-events: none;
   }
 
+  .scanline-safe {
+    background: transparent;
+    /* animation disabled - static UI only */
+  }
+
+  .scanline-warning {
+    background: transparent;
+    /* animation disabled - static UI only */
+  }
+
+  .scanline-danger {
+    background: transparent;
+    /* animation disabled - static UI only */
+  }
+
   .text-glow-safe {
     text-shadow: 0 0 10px hsl(142 71% 45% / 0.5);
   }
@@ -130,12 +148,71 @@
   50% { opacity: 0.5; }
 }
 
-@keyframes flash-danger {
-  0%, 100% { border-color: hsl(0 84% 60% / 0.8); }
-  50% { border-color: hsl(0 84% 60% / 0.2); }
-}
+/* @keyframes flash-danger - DISABLED (no screen flashing) */
 
 @keyframes scan {
   0% { transform: translateY(-100%); }
   100% { transform: translateY(100%); }
+}
+
+/* Scrollbar Styling for Alert Feed */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(222 30% 18% / 0.7);
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(222 30% 25% / 0.9);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(222 30% 18% / 0.7) transparent;
+}
+
+/* 🔴 FLASH EFFECT - DISABLED */
+.alert-flash {
+  /* animation disabled - static UI only */
+}
+
+/* 💥 SHAKE EFFECT - DISABLED */
+.alert-shake {
+  /* no animation - shake disabled */
+}
+
+/* @keyframes shake - DISABLED (no screen shaking) */
+
+/* 🔄 RADAR ROTATION */
+@keyframes radar-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.radar-scan {
+  animation: radar-rotate 6s linear infinite;
+}
+
+/* Custom div icon for markers */
+.custom-div-icon {
+  background: none !important;
+  border: none !important;
+}
+
+/* Pulsing threat circle - DISABLED */
+@keyframes threat-pulse {
+  /* animation disabled - static UI only */
+}
+
+.threat-pulse {
+  /* no animation */
 }
