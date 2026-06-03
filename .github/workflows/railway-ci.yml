@@ -1,0 +1,115 @@
+name: Full-stack Node.js + React CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  build:
+    name: Build and verify full-stack app
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [lts/*]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: Install dependencies
+        run: |
+          if [ -f package.json ]; then npm ci; fi
+          if [ -f client/package.json ]; then cd client && npm ci && cd ..; fi
+          if [ -f server/package.json ]; then cd server && npm ci && cd ..; fi
+
+      - name: Build frontend
+        run: |
+          if [ -f client/package.json ]; then
+            cd client && npm run build
+          elif [ -f package.json ]; then
+            npm run build
+          else
+            echo "No frontend build step found."
+          fi
+
+      - name: Run tests (allow no tests)
+        run: |
+          if [ -f client/package.json ]; then
+            cd client && npm test -- --passWithNoTests
+          elif [ -f package.json ]; then
+            npm test -- --passWithNoTests
+          else
+            echo "No test package.json found. Skipping tests."
+          fi
+
+      - name: Run backend smoke check
+        run: |
+          set -e
+          if [ -f server/package.json ]; then
+            cd server
+            if grep -q '"start"' package.json; then
+              nohup npm start >../server.log 2>&1 &
+            else
+              nohup node index.js >../server.log 2>&1 &
+            fi
+          elif [ -f package.json ]; then
+            nohup npm run server >server.log 2>&1 &
+          else
+            echo "No backend package.json found. Skipping backend run."
+            exit 0
+          fi
+
+          PID=$!
+          trap 'kill $PID' EXIT
+
+          n=0
+          until curl --silent --fail -X POST http://localhost:4000/ai-analyze -H 'Content-Type: application/json' -d '{"scenario":"ci smoke test"}' > /dev/null 2>&1; do
+            n=$((n+1))
+            if [ $n -ge 10 ]; then
+              echo "Backend failed to respond after 20 seconds"
+              cat ../server.log || true
+              exit 1
+            fi
+            sleep 2
+          done
+
+  deploy:
+    name: Optional Railway deployment
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.RAILWAY_TOKEN != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: lts/*
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy to Railway
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+          RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
+        run: |
+          railway login --ci
+          if [ -n "$RAILWAY_PROJECT_ID" ]; then
+            railway up --project "$RAILWAY_PROJECT_ID" --detach
+          else
+            railway up --detach
+          fi
