@@ -2,6 +2,9 @@
 
 # 🚀 Sentinel AI-X
 
+🚀 Live Demo: [https://sentinel-ai-x-production.up.railway.app/]
+(https://sentinel-ai-x-production.up.railway.app/)
+
 > Autonomous Decision Intelligence + Predictive Threat System
 
 Sentinel AI-X is an advanced AI-powered defense system that not only detects threats but also predicts, simulates, and assists in decision-making.
